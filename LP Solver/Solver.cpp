@@ -74,7 +74,7 @@ namespace LPSolver
         const vec & beq,
         const vec & lb,
         const vec & ub,
-        vec& x)
+        vec & x)
     {
         check_dimension(f, A, b, Aeq, beq, lb, ub);
         
@@ -82,27 +82,46 @@ namespace LPSolver
         return Status::unique;
     }
 
+    /*
+    normal form：
+    max  (f, 0)'(x, x_bar)
+    s.t. (A, I)(x, x_bar)' = b > 0
+          x >= 0
+    */
     Status SimplexNormalFormWithSlackVariables(
-        const vec & f,
-        const mat & A,
-        const vec & b,
-        vec& x)
+        vec & f,
+        mat & A,
+        vec & b,
+        vec & x)
     {
-        int n_variables = A.n_cols;
         int n_constraints = A.n_rows;
+        int n_variables = A.n_cols;
+        int n_original_variables = n_variables - n_constraints;
 
-        vec new_f = vec(n_variables + n_constraints);
+        /*vec new_f = vec(n_variables + n_constraints);
         new_f.tail(n_constraints).fill(0);
         new_f.head(n_variables) = f;
 
-       /* uvec pos = b < 0;
+        uvec pos = b < 0;
         vec new_b = vec(b);
-        new_b.elem(pos) *= -1;*/
+        new_b.elem(pos) *= -1;
 
         mat new_A = mat(n_constraints, n_variables + n_constraints);
         new_A.submat(0, 0, n_constraints - 1, n_variables - 1) = A;
-        //new_A.rows(pos) *= -1;
-        new_A.submat(0, n_variables, n_constraints - 1, n_variables + n_constraints - 1).eye();
+        new_A.rows(pos) *= -1;
+        new_A.submat(0, n_variables, n_constraints - 1, n_variables + n_constraints - 1).eye();*/
+
+        //一阶段目标函数
+        vec h = sum(A, 0).t();
+        h.tail(n_constraints).fill(0);
+        double first_opt = -sum(b);
+        double second_opt = 0;
+        //一阶段
+        while (any(h > 0))
+        {
+            int swap_out = (h > 0).index_max();
+            int swap_in;
+        }
 
         return Status::infinite;
     }

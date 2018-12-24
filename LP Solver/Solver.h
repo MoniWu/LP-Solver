@@ -21,15 +21,4 @@ namespace LPSolver
         const arma::vec & ub,
         arma::vec& x);
 
-    /*
-    normal form£º
-    max  f'x
-    s.t. Ax == b > 0
-          x >= 0
-    */
-    Status SimplexNormalFormWithSlackVariables(
-        const arma::vec & f,
-        const arma::mat & A,
-        const arma::vec & b,
-        arma::vec& x);
 }
