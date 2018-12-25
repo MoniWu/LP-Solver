@@ -92,7 +92,8 @@ namespace LPSolver
         vec & f,
         mat & A,
         vec & b,
-        vec & x)
+        vec & x,
+        double & optimun)
     {
         int n_constraints = A.n_rows;
         int n_variables = A.n_cols;
@@ -114,13 +115,14 @@ namespace LPSolver
         //一阶段目标函数
         vec h = sum(A, 0).t();
         h.tail(n_constraints).fill(0);
-        double first_opt = -sum(b);
+        double first_opt = sum(b);
         double second_opt = 0;
         //一阶段
         while (any(h > 0))
         {
             int swap_out = (h > 0).index_max();
-            int swap_in;
+            auto positive_index = find(A.col(swap_out) > 0);
+            int swap_in = (b.elem(positive_index) / A.col(swap_out)(positive_index));
         }
 
         return Status::infinite;

@@ -8,6 +8,7 @@ int main()
     vec x = randu<vec>(5)-0.5;
     x.print();
     (x > 0).print();
+    x.elem(find(x > 0)).print();
     std::cout << (x > 0).index_max();
     int n_variables = A.n_cols;
     int n_constraints = A.n_rows;
