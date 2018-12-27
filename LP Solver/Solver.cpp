@@ -66,7 +66,7 @@ namespace LPSolver
         return Status::infinite;
     }
 
-    Status simplex(
+    Status Simplex(
         bool is_min,
         const vec & f,
         const mat & A,
@@ -75,7 +75,8 @@ namespace LPSolver
         const vec & beq,
         const vec & lb,
         const vec & ub,
-        vec & x)
+        vec & x,
+        double & optimun)
     {
         check_dimension(f, A, b, Aeq, beq, lb, ub);
         
@@ -95,15 +96,18 @@ namespace LPSolver
         return -1;
     }
 
-    int FindSwapOut(const mat & A, const vec & b, int swap_in)
+    int FindSwapOut(const mat & Ab, int swap_in)
     {
+        int rows = Ab.n_rows;
+        int cols = Ab.n_cols;
+        auto b = Ab.col(cols - 1);
         double min_ratio = std::numeric_limits<double>::max();
         int index = -1;
-        for (int i = 0; i < b.n_cols; i++)
+        for (int i = 0; i < rows; i++)
         {
-            if (A.at(i, swap_in) > 0)
+            if (Ab.at(i, swap_in) > 0)
             {
-                double ratio = b[i] / A.at(i, swap_in) < min_ratio;
+                double ratio = b[i] / Ab.at(i, swap_in);
                 if (ratio < min_ratio)
                 {
                     min_ratio = ratio;
@@ -114,7 +118,7 @@ namespace LPSolver
         return index;
     }
 
-    void GaussianElimination(int swap_in, int swap_out, mat & Ab, vec & f)
+    void GaussianElimination(int swap_in, int swap_out, vec & f, mat & Ab)
     {
         Ab.row(swap_out) /= Ab.at(swap_out, swap_in);
         for (int i = 0; i < Ab.n_rows; i++)
@@ -122,13 +126,13 @@ namespace LPSolver
             if (i == swap_out)continue;
             Ab.row(i) -= Ab.row(i)[swap_in] * Ab.row(swap_out);
         }
-        f -= f[swap_in] * Ab.row(swap_out);
+        f -= f[swap_in] * Ab.row(swap_out).t();
     }
 
-    void GaussianElimination(int swap_in, int swap_out, mat & Ab, vec & f1, vec & f2)
+    void GaussianElimination(int swap_in, int swap_out, vec & f1, vec & f2, mat & Ab)
     {
-        GaussianElimination(swap_in, swap_out, Ab, f1);
-        f2 -= f2[swap_in] * Ab.row(swap_out);
+        GaussianElimination(swap_in, swap_out, f1, Ab);
+        f2 -= f2[swap_in] * Ab.row(swap_out).t();
     }
 
     /*
@@ -136,19 +140,70 @@ namespace LPSolver
     max  (f, 0)'(x, x_bar)
     s.t. (A, I)(x, x_bar)' = b > 0
           x >= 0
+
+    input:
+    f: [f0, ..., fn+m-1, opt]
+    Ab: [ A0,0 , ...,  A0,n+m-1 ,  b0 ]
+        [ ...  ,    ,    ...    ,  ...]
+        [An-1,0, ..., An-1,n+m-1, bm-1]
+    output:
+    x: [x0, ..., xn+m-1]
+    optimun: (double)
+
+      f0  ,   f1  , ...,   fn+m-1  | opt
+    --------------------------------------
+     A0,0 ,  A0,1 , ...,  A0,n+m-1 | b0
+      ... ,  ...  ,    ,    ...    | ...
+    An-1,0, An-1,1, ..., An-1,n+m-1| bm-1
     */
     Status SimplexNormalFormWithSlackVariables(
         vec & f,
-        mat & A,
-        vec & b,
+        mat & Ab,
+        //vec & b,
         vec & x,
         double & optimun)
     {
-        int n_constraints = A.n_rows;
-        int n_variables = A.n_cols;
+        int n_constraints = Ab.n_rows;
+        int n_variables = Ab.n_cols - 1;
         int n_original_variables = n_variables - n_constraints;
 
-        /*vec new_f = vec(n_variables + n_constraints);
+        //一阶段目标函数
+        vec h = sum(Ab, 0).t();
+        h.subvec(n_original_variables, n_variables - 1).fill(0);
+        uvec basic_x_subscript = linspace<uvec>(n_original_variables, n_variables - 1, n_constraints);
+        //一阶段
+        while (any(h.subvec(0, h.n_rows - 2) > 0))
+        {
+            int swap_in = FindSwapIn(h);
+            int swap_out = FindSwapOut(Ab, swap_in);
+            if (swap_out == -1)
+                return Status::none;
+            basic_x_subscript[swap_out] = swap_in;
+            GaussianElimination(swap_in, swap_out, f, h, Ab);
+        }
+        double first_opt = h[n_variables];
+        if (abs(first_opt) > EPSILON)
+            return Status::none;
+        //二阶段
+        while (any(f.subvec(0, f.n_rows - 2) > 0))
+        {
+            int swap_in = FindSwapIn(f);
+            int swap_out = FindSwapOut(Ab, swap_in);
+            if (swap_out == -1)
+                return Status::unbounded;
+            basic_x_subscript[swap_out] = swap_in;
+            GaussianElimination(swap_in, swap_out, f, Ab);
+        }
+        x.set_size(n_variables);
+        x.fill(0);
+        x.elem(basic_x_subscript) = Ab.col(n_variables);
+        optimun = -f[n_variables];
+        if (any(f.subvec(n_original_variables, n_variables - 1) > -EPSILON))  //fn+k == 0
+            return Status::infinite;
+        return Status::unique;
+    }
+
+    /*vec new_f = vec(n_variables + n_constraints);
         new_f.tail(n_constraints).fill(0);
         new_f.head(n_variables) = f;
 
@@ -160,22 +215,5 @@ namespace LPSolver
         new_A.submat(0, 0, n_constraints - 1, n_variables - 1) = A;
         new_A.rows(pos) *= -1;
         new_A.submat(0, n_variables, n_constraints - 1, n_variables + n_constraints - 1).eye();*/
-
-        //一阶段目标函数
-        vec h = sum(A, 0).t();
-        h.tail(n_constraints).fill(0);
-        double first_opt = sum(b);
-        double second_opt = 0;
-        uvec basic_x_subscript = linspace<uvec>(n_original_variables, n_variables - 1, n_constraints);
-        //一阶段
-        while (any(h > 0))
-        {
-            int swap_in = FindSwapIn(h);
-            int swap_out = FindSwapOut(A, b, swap_in);
-            basic_x_subscript[swap_out] = swap_in;
-        }
-
-        return Status::infinite;
-    }
 }
 
