@@ -5,7 +5,7 @@ int main()
 {
     //生成一个随机矩阵A,大小为5x5，矩阵每个元素的范围为：(0,10)
     mat A = randu<mat>(5,2) * 10;
-    vec x = randu<vec>(5)-0.5;
+    uvec x = linspace<uvec>(2, 5, 4);
     x.print();
     (x > 0).print();
     x.elem(find(x > 0)).print();

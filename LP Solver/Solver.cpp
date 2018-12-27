@@ -1,5 +1,6 @@
 #include "Solver.h"
 #include <tuple>
+#include <limits>
 
 namespace LPSolver
 {
@@ -82,6 +83,54 @@ namespace LPSolver
         return Status::unique;
     }
 
+    int FindSwapIn(const vec & f)
+    {
+        for (int i = 0; i < f.n_cols; i++)
+        {
+            if (f[i] > 0)
+            {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    int FindSwapOut(const mat & A, const vec & b, int swap_in)
+    {
+        double min_ratio = std::numeric_limits<double>::max();
+        int index = -1;
+        for (int i = 0; i < b.n_cols; i++)
+        {
+            if (A.at(i, swap_in) > 0)
+            {
+                double ratio = b[i] / A.at(i, swap_in) < min_ratio;
+                if (ratio < min_ratio)
+                {
+                    min_ratio = ratio;
+                    index = i;
+                }
+            }
+        }
+        return index;
+    }
+
+    void GaussianElimination(int swap_in, int swap_out, mat & Ab, vec & f)
+    {
+        Ab.row(swap_out) /= Ab.at(swap_out, swap_in);
+        for (int i = 0; i < Ab.n_rows; i++)
+        {
+            if (i == swap_out)continue;
+            Ab.row(i) -= Ab.row(i)[swap_in] * Ab.row(swap_out);
+        }
+        f -= f[swap_in] * Ab.row(swap_out);
+    }
+
+    void GaussianElimination(int swap_in, int swap_out, mat & Ab, vec & f1, vec & f2)
+    {
+        GaussianElimination(swap_in, swap_out, Ab, f1);
+        f2 -= f2[swap_in] * Ab.row(swap_out);
+    }
+
     /*
     normal form£º
     max  (f, 0)'(x, x_bar)
@@ -117,12 +166,13 @@ namespace LPSolver
         h.tail(n_constraints).fill(0);
         double first_opt = sum(b);
         double second_opt = 0;
+        uvec basic_x_subscript = linspace<uvec>(n_original_variables, n_variables - 1, n_constraints);
         //Ò»½×¶Î
         while (any(h > 0))
         {
-            int swap_out = (h > 0).index_max();
-            auto positive_index = find(A.col(swap_out) > 0);
-            int swap_in = (b.elem(positive_index) / A.col(swap_out)(positive_index));
+            int swap_in = FindSwapIn(h);
+            int swap_out = FindSwapOut(A, b, swap_in);
+            basic_x_subscript[swap_out] = swap_in;
         }
 
         return Status::infinite;
