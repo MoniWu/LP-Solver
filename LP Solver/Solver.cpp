@@ -1,5 +1,4 @@
 #include "Solver.h"
-#include <tuple>
 #include <limits>
 
 namespace LPSolver
@@ -15,7 +14,7 @@ namespace LPSolver
         const vec & lb,
         const vec & ub)
     {
-        int n_variables = A.n_cols;
+        /*int n_variables = A.n_cols;
         int n_equ_constraints = Aeq.n_rows;
         int n_inequ_constraints = A.n_rows;
 
@@ -30,7 +29,7 @@ namespace LPSolver
         if (ub.n_rows != n_variables)
             throw std::invalid_argument("Dimension mismatch.");
         if (Aeq.n_cols != n_variables)
-            throw std::invalid_argument("Dimension mismatch.");
+            throw std::invalid_argument("Dimension mismatch.");*/
     }
 
     /*
