@@ -34,6 +34,12 @@ namespace LPSolver
     }
 
     /*
+    TODO: 
+        两步转换：
+           一般的LP问题变为单纯性标准形式；
+           单纯性标准形式加上二阶段法使用的人工变量。
+        为了减少矩阵复制的次数，希望一步做完。
+        注：小于约束的两步转换可以共用同一个变量
     */
     void ConvertToNormalForm(
         bool is_min, 
@@ -151,10 +157,13 @@ namespace LPSolver
 
         //一阶段目标函数
         vec h = sum(Ab, 0).t();
+        /*f.t().print("f");
+        h.t().print("h");
+        Ab.print("Ab");*/
         h.subvec(n_original_variables, n_variables - 1).fill(0);
         uvec basic_x_subscript = linspace<uvec>(n_original_variables, n_variables - 1, n_constraints);
         //一阶段
-        while (any(h.subvec(0, h.n_rows - 2) > 0))
+        while (any(h.subvec(0, n_variables - 1) > 0))
         {
             int swap_in = FindSwapIn(h);
             int swap_out = FindSwapOut(Ab, swap_in);
@@ -162,12 +171,15 @@ namespace LPSolver
                 return Status::none;
             basic_x_subscript[swap_out] = swap_in;
             GaussianElimination(swap_in, swap_out, f, h, Ab);
+            /*f.t().print("f");
+            h.t().print("h");
+            Ab.print("Ab");*/
         }
         double first_opt = h[n_variables];
         if (abs(first_opt) > EPSILON)
             return Status::none;
         //二阶段
-        while (any(f.subvec(0, f.n_rows - 2) > 0))
+        while (any(f.subvec(0, n_original_variables - 1) > 0))
         {
             int swap_in = FindSwapIn(f);
             int swap_out = FindSwapOut(Ab, swap_in);
@@ -175,6 +187,8 @@ namespace LPSolver
                 return Status::unbounded;
             basic_x_subscript[swap_out] = swap_in;
             GaussianElimination(swap_in, swap_out, f, Ab);
+            /*f.t().print("f");
+            Ab.print("Ab");*/
         }
         x.set_size(n_variables);
         x.fill(0);
