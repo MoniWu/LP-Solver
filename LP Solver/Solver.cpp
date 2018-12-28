@@ -34,9 +34,8 @@ namespace LPSolver
     }
 
     /*
-    返回极大化问题的
     */
-    std::tuple<mat, mat, mat> normal_form(
+    void ConvertToNormalForm(
         bool is_min, 
         const vec & f,
         const mat & A, 
@@ -46,24 +45,8 @@ namespace LPSolver
         const vec & lb,
         const vec & ub)
     {
-        int n_variables = A.n_cols;
-        int n_equ_constraints = Aeq.n_rows;
-        int n_inequ_constraints = A.n_rows;
-
-        vec normal_f = vec(3 * n_variables + n_equ_constraints + n_inequ_constraints, 0);
-        normal_f.head(n_variables) = is_min ? -f : f;
-
-
-        return std::tuple<mat, mat, mat>();
-    }
-
-    Status first_phase(
-        const vec & f,
-        const mat & A,
-        const vec & b,
-        vec& x)
-    {
-        return Status::infinite;
+        // unimplemented
+        throw std::exception();
     }
 
     Status Simplex(
@@ -77,16 +60,15 @@ namespace LPSolver
         const vec & ub,
         vec & x,
         double & optimun)
-    {
-        check_dimension(f, A, b, Aeq, beq, lb, ub);
-        
-
+    {        
+        // unimplemented
+        throw std::exception();
         return Status::unique;
     }
 
     int FindSwapIn(const vec & f)
     {
-        for (int i = 0; i < f.n_cols; i++)
+        for (int i = 0; i < f.n_rows; i++)
         {
             if (f[i] > 0)
             {
@@ -202,18 +184,5 @@ namespace LPSolver
             return Status::infinite;
         return Status::unique;
     }
-
-    /*vec new_f = vec(n_variables + n_constraints);
-        new_f.tail(n_constraints).fill(0);
-        new_f.head(n_variables) = f;
-
-        uvec pos = b < 0;
-        vec new_b = vec(b);
-        new_b.elem(pos) *= -1;
-
-        mat new_A = mat(n_constraints, n_variables + n_constraints);
-        new_A.submat(0, 0, n_constraints - 1, n_variables - 1) = A;
-        new_A.rows(pos) *= -1;
-        new_A.submat(0, n_variables, n_constraints - 1, n_variables + n_constraints - 1).eye();*/
 }
 
