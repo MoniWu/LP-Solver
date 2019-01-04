@@ -2,12 +2,17 @@
 #include <sstream>
 using namespace std;
 int Branch::FindFirstNotInt(vec x) {
-	for(int i=0 ; ;)
+	for (int i = 0; i < x.n_rows; i++) {
+		int temp = (int)x[i];
+		if ((x[i] - temp) > this->EPSILON)
+			return i;
+	}
 	return -1;
 }
 
-void Branch::parse(const int& cnt, const string& ff, const vector<string>& cst)
+void Branch::parse(const int& cnt, const string& ff, const vector<string>& cst, vec& f0, mat& Ab0, vector<int>& mode0)
 {
+	
 	stringstream ss;
 	stringstream part;
 	string seg;
@@ -22,7 +27,7 @@ void Branch::parse(const int& cnt, const string& ff, const vector<string>& cst)
 		if (seg.find("C") != string::npos) {
 			part << seg.substr(seg.find("C")+1);
 			part >> index;
-			this->f[index-1] = positive ? 1 : -1;
+			f0[index-1] = positive ? 1 : -1;
 			part.clear();
 		}
 		else {
@@ -32,11 +37,10 @@ void Branch::parse(const int& cnt, const string& ff, const vector<string>& cst)
 			ss >> seg;
 			part << seg.substr(seg.find("C") + 1);
 			part >> index;
-			this->f[index-1] = positive ? coef : -coef;
+			f0[index-1] = positive ? coef : -coef;
 			part.clear();
 		}
 	}
-	this->f.t().print();
 	
 	int mode = 0;
 	int b = 0;
@@ -47,11 +51,11 @@ void Branch::parse(const int& cnt, const string& ff, const vector<string>& cst)
 			cs >> seg;
 			if (seg[0] == '<' || seg[0] == '>' || seg[0] == '=')
 				break;
-			positive = seg[0] == '+' ? true : false;
+			positive = seg[0] == '-' ? false : true;
 			if (seg.find("C") != string::npos) {
 				part << seg.substr(seg.find("C") + 1);
 				part >> index;
-				this->Ab.at(i,index-1) = positive ? 1 : -1;
+				Ab0.at(i,index-1) = positive ? 1 : -1;
 				part.clear();
 				seg.clear();
 			}
@@ -62,7 +66,7 @@ void Branch::parse(const int& cnt, const string& ff, const vector<string>& cst)
 				cs >> seg;
 				part << seg.substr(seg.find("C") + 1);
 				part >> index;
-				this->Ab.at(i,index-1) = coef;
+				Ab0.at(i,index-1) = coef;
 				part.clear();
 				seg.clear();
 			}
@@ -74,39 +78,55 @@ void Branch::parse(const int& cnt, const string& ff, const vector<string>& cst)
 		case '=': mode = 2; break;
 		default: break;
 		}
-		this->mode.push_back(mode);
+		mode0.push_back(mode);
 		
 		cs >> b;
-		this->Ab.at(i, cnt) = b;
+		Ab0.at(i, cnt) = b;
 		cs.clear();
 	}
 	//this->Ab.print();
 }
 
-void Branch::normal() {
+void Branch::normal(vec& f0, mat& Ab0, vector<int>& mode0, uvec& base0, uvec& arti0) {
 	vector<arma::uword> tbase;
 	vector<arma::uword> tart;
-	int cnum = (int)this->Ab.n_rows;
+	int cnum = (int)Ab0.n_rows;
 	
-	for (int i = 0; i < this->mode.size(); i++) {
+	for (int i = 0; i < mode0.size(); i++) {
 		colvec cv = colvec(cnum).fill(0);
 		colvec cv2 = colvec(cnum).fill(0);
-		switch (this->mode[i]) {
-		case 0: cv[i] = 1; this->Ab.insert_cols(this->Ab.n_cols - 1, cv); 
-				tbase.push_back(this->Ab.n_cols-2); break;
-		case 1: cv[i] = -1; this->Ab.insert_cols(this->Ab.n_cols - 1, cv); 
-				cv2[i] = 1; this->Ab.insert_cols(this->Ab.n_cols - 1, cv2); 
-				tbase.push_back(this->Ab.n_cols - 2); 
-				tart.push_back(this->Ab.n_cols - 2); break;
-		case 2: cv[i] = 1; this->Ab.insert_cols(this->Ab.n_cols - 1, cv); 
-				tbase.push_back(this->Ab.n_cols - 2);
-				tart.push_back(this->Ab.n_cols - 2); break; break;
+		switch (mode0[i]) {
+		case 0: cv[i] = 1; Ab0.insert_cols(Ab0.n_cols - 1, cv); 
+				tbase.push_back(Ab0.n_cols-2); break;
+		case 1: cv[i] = -1; Ab0.insert_cols(Ab0.n_cols - 1, cv); 
+				cv2[i] = 1; Ab0.insert_cols(Ab0.n_cols - 1, cv2); 
+				tbase.push_back(Ab0.n_cols - 2); 
+				tart.push_back(Ab0.n_cols - 2); break;
+		case 2: cv[i] = 1; Ab0.insert_cols(Ab0.n_cols - 1, cv); 
+				tbase.push_back(Ab0.n_cols - 2);
+				tart.push_back(Ab0.n_cols - 2); break; break;
 		default:break;
 		}
 	}
-	this->base = uvec(tbase);
-	this->arti = uvec(tart);
-	this->base.t().print();
-	this->arti.t().print();
-	this->Ab.print();
+	base0 = uvec(tbase);
+	arti0 = uvec(tart);
+	f0.insert_rows(f0.n_rows, vec(Ab0.n_cols - f0.n_rows).fill(0));
+}
+
+Branch Branch::upBranch(int index)
+{
+	vec new_f = this->f;
+	mat new_Ab = this->Ab;
+	uvec new_base = this->base;
+	uvec new_arti = this->arti;
+	return Branch(new_f, new_Ab, new_base, new_arti);
+}
+
+Branch Branch::lowBranch(int index)
+{
+	vec new_f = this->f;
+	mat new_Ab = this->Ab;
+	uvec new_base = this->base;
+	uvec new_arti = this->arti;
+	return Branch(new_f, new_Ab, new_base, new_arti);
 }

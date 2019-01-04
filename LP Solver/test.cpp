@@ -5,7 +5,6 @@
 #include "Solver.h"
 #include "Branch.h"
 
-#define MLEN 200
 using namespace arma;
 using namespace LPSolver;
 using namespace std;
@@ -34,26 +33,30 @@ void read(int& cnt, string& f, vector<string>& cst)
 
 int main()
 {
-    /*vec f = vec({2,3,0,0,0,0,0,0,0 });
-    f.t().print("\n");
-    mat Ab = mat({ {1,2,1,0,0,1,0,0,8},{4,0,0,1,0,0,1,0,16},{0,4,0,0,1,0,0,1,12} });
-    Ab.print("\n");
-    vec x = vec();
-    double opt;
-    Status status;
-    status = SimplexNormalFormWithSlackVariables(f, Ab, x, opt);
-    cout << opt << endl;
-    cout << status << endl;
-    x.t().print("\n");*/
-    /*vec f = vec({ 3,-1,-1,0,0,0,0,0,0 });
-    f.t().print("\n");
-    mat Ab = mat({ {1,-2,1,1,0,1,0,0,11},{-4,1,2,0,-1,0,1,0,3},{-2,0,1,0,0,0,0,1,1} });
-    Ab.print("\n");
-    vec x = vec();
-    double opt;
-    Status status;
-    status = SimplexNormalFormWithSlackVariables(f, Ab, x, opt);
-    cout << opt << endl;
-    cout << status << endl;
-    x.t().print("\n");*/
+	int cnt;
+	string ff;
+	vector<string> cst;
+	read(cnt, ff, cst);
+
+	vec f = vec(cnt).fill(0);
+	mat Ab = mat(cst.size(),cnt+1).fill(0);
+	vector<int> mode;
+	Branch::parse(cnt, ff, cst, f, Ab, mode);
+
+	uvec base;
+	uvec arti;
+	Branch::normal(f, Ab, mode, base, arti);
+
+	Branch bh = Branch(f,Ab,base,arti);
+
+	vec x = vec();
+	double opt;
+	Status status;
+	status = SimplexNormalFormWithSlackVariables(bh.f, bh.Ab, bh.base, bh.arti, x, opt);
+	cout << opt << endl;
+	cout << status << endl;
+	x.t().print();
+
+	getchar();
+	return 0;
 }

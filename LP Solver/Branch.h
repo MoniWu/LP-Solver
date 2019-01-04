@@ -4,22 +4,25 @@ using namespace std;
 using namespace arma;
 class Branch {
 public:
+	const double EPSILON = 1e-7;
 	vec f;
 	mat Ab;
-	vector<int> mode;
+	//vector<int> mode;
 	uvec base;
 	uvec arti;
 public:
-	Branch(int cnt, string ff, vector<string> cst) {
-		int m = (int)cst.size();
-		this->f = vec(cnt);
-		this->f.fill(0);
-		this->Ab = mat(m,cnt+1);
-		this->Ab.fill(0);
-		parse(cnt, ff, cst);
-		normal();
+	Branch() {
+
 	}
+	Branch(vec f, mat Ab, uvec base, uvec arti) {
+		this->f = f;
+		this->Ab = Ab;
+		this->base = base;
+		this->arti = arti;
+	}
+	static void parse(const int& cnt, const string& ff, const vector<string>& cst, vec& f0, mat& Ab0, vector<int>& mode0);
+	static void normal(vec& f0, mat& Ab0, vector<int>& mode0, uvec& base0, uvec& arti0);
 	int FindFirstNotInt(vec x);
-	void parse(const int& cnt, const string& ff, const vector<string>& cst);
-	void normal();
+	Branch upBranch(int index);
+	Branch lowBranch(int index);
 };
