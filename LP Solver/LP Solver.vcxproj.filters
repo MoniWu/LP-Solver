@@ -21,9 +21,15 @@
     <ClCompile Include="Solver.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="Branch.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Solver.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Branch.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
