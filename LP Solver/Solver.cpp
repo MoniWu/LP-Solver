@@ -184,9 +184,9 @@ namespace LPSolver
         //一阶段目标函数
         vec h = sum(Ab, 0).t();
         h.elem(artificial_index).fill(0);
-        f.t().print("f");
-        h.t().print("h");
-        Ab.print("Ab");
+        //f.t().print("f");
+        //h.t().print("h");
+        //Ab.print("Ab");
         if (artificial_index.n_rows > 0)
         {
             //一阶段
@@ -198,9 +198,9 @@ namespace LPSolver
                     return Status::none;
                 basic_index[swap_out] = swap_in;
                 GaussianElimination(swap_in, swap_out, f, h, Ab);
-                f.t().print("f");
-                h.t().print("h");
-                Ab.print("Ab");
+                //f.t().print("f");
+                //h.t().print("h");
+                //Ab.print("Ab");
             }
             double first_opt = h[n_variables];
             if (abs(first_opt) > EPSILON)
@@ -219,8 +219,8 @@ namespace LPSolver
                 return Status::unbounded;
             basic_index[swap_out] = swap_in;
             GaussianElimination(swap_in, swap_out, f, Ab);
-            f.t().print("f");
-            Ab.print("Ab");
+            //f.t().print("f");
+            //Ab.print("Ab");
         }
         x.set_size(n_variables);
         x.fill(0);
