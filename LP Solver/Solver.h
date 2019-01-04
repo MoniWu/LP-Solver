@@ -27,6 +27,8 @@ namespace LPSolver
     Status SimplexNormalFormWithSlackVariables(
         arma::vec & f,
         arma::mat & Ab,
+        arma::uvec & basic_index,
+        const arma::uvec & artificial_index,
         arma::vec & x,
         double & optimun);
 }

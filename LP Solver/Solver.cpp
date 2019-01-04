@@ -122,6 +122,32 @@ namespace LPSolver
         f2 -= f2[swap_in] * Ab.row(swap_out).t();
     }
 
+    template<typename T>
+    T vec_remove_elem(const T& v, const uvec& index)
+    {
+        uvec sorted_index = sort_index(index);
+        T result = T(v.n_rows - index.n_rows);
+        int i_v = 0, i_result = 0, i_index = 0;
+        for (; i_index < index.n_rows; i_v++)
+        {
+            if (i_v == index[sorted_index[i_index]])
+                i_index++;
+            else
+                result[i_result++] = v[i_v];
+        }
+        for (; i_v < v.n_rows; i_v++)
+            result[i_result++] = v[i_v];
+        return result;
+    }
+
+    bool isDegenerated(const vec & f, const uvec & basic_index, const uvec & artificial_index)
+    {
+        vec tmp_f = f;
+        tmp_f.elem(basic_index) += 1;
+        tmp_f.elem(artificial_index) += 1;
+        return any(tmp_f.subvec(0, f.n_rows - 1) > -EPSILON);  //fn+k == 0
+    }
+
     /*
     normal form：
     max  (f, 0)'(x, x_bar)
@@ -146,7 +172,8 @@ namespace LPSolver
     Status SimplexNormalFormWithSlackVariables(
         vec & f,
         mat & Ab,
-        //vec & b,
+        uvec & basic_index,
+        const uvec & artificial_index,
         vec & x,
         double & optimun)
     {
@@ -156,44 +183,50 @@ namespace LPSolver
 
         //一阶段目标函数
         vec h = sum(Ab, 0).t();
-        /*f.t().print("f");
+        h.elem(artificial_index).fill(0);
+        f.t().print("f");
         h.t().print("h");
-        Ab.print("Ab");*/
-        h.subvec(n_original_variables, n_variables - 1).fill(0);
-        uvec basic_x_subscript = linspace<uvec>(n_original_variables, n_variables - 1, n_constraints);
-        //一阶段
-        while (any(h.subvec(0, n_variables - 1) > 0))
+        Ab.print("Ab");
+        if (artificial_index.n_rows > 0)
         {
-            int swap_in = FindSwapIn(h);
-            int swap_out = FindSwapOut(Ab, swap_in);
-            if (swap_out == -1)
+            //一阶段
+            while (any(h.subvec(0, n_variables - 1) > 0))
+            {
+                int swap_in = FindSwapIn(h);
+                int swap_out = FindSwapOut(Ab, swap_in);
+                if (swap_out == -1)
+                    return Status::none;
+                basic_index[swap_out] = swap_in;
+                GaussianElimination(swap_in, swap_out, f, h, Ab);
+                f.t().print("f");
+                h.t().print("h");
+                Ab.print("Ab");
+            }
+            double first_opt = h[n_variables];
+            if (abs(first_opt) > EPSILON)
                 return Status::none;
-            basic_x_subscript[swap_out] = swap_in;
-            GaussianElimination(swap_in, swap_out, f, h, Ab);
-            /*f.t().print("f");
-            h.t().print("h");
-            Ab.print("Ab");*/
         }
-        double first_opt = h[n_variables];
-        if (abs(first_opt) > EPSILON)
-            return Status::none;
+        //TODO:去除人工变量后做2阶段
+        //     人工变量可能出现在前面
         //二阶段
-        while (any(f.subvec(0, n_original_variables - 1) > 0))
+        uvec origin_index = linspace<uvec>(0, n_variables - 1, n_variables);
+        origin_index = vec_remove_elem(origin_index, artificial_index);
+        while (any(f.elem(origin_index) > 0))  //TODO：要改
         {
             int swap_in = FindSwapIn(f);
             int swap_out = FindSwapOut(Ab, swap_in);
             if (swap_out == -1)
                 return Status::unbounded;
-            basic_x_subscript[swap_out] = swap_in;
+            basic_index[swap_out] = swap_in;
             GaussianElimination(swap_in, swap_out, f, Ab);
-            /*f.t().print("f");
-            Ab.print("Ab");*/
+            f.t().print("f");
+            Ab.print("Ab");
         }
         x.set_size(n_variables);
         x.fill(0);
-        x.elem(basic_x_subscript) = Ab.col(n_variables);
+        x.elem(basic_index) = Ab.col(n_variables);
         optimun = -f[n_variables];
-        if (any(f.subvec(n_original_variables, n_variables - 1) > -EPSILON))  //fn+k == 0
+        if (isDegenerated(f, basic_index, artificial_index))
             return Status::infinite;
         return Status::unique;
     }
