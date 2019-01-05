@@ -23,6 +23,6 @@ public:
 	static void parse(const int& cnt, const string& ff, const vector<string>& cst, vec& f0, mat& Ab0, vector<int>& mode0);
 	static void normal(vec& f0, mat& Ab0, vector<int>& mode0, uvec& base0, uvec& arti0);
 	int FindFirstNotInt(vec x);
-	Branch upBranch(int index);
+	Branch upBranch(int index, vec x);
 	Branch lowBranch(int index, vec x);
 };

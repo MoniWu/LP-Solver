@@ -62,7 +62,8 @@ int main()
 	bh.Ab.print();
 	cout << "new branch:" << endl;
 
-	Branch low = bh.lowBranch(0, x);
+	Branch low = bh.upBranch(0, x);
+	cout << "after normal: " << endl;
 	low.Ab.print();
 	cout << "base: ";
 	low.base.t().print();

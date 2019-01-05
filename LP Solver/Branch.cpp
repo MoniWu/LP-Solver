@@ -115,13 +115,50 @@ void Branch::normal(vec& f0, mat& Ab0, vector<int>& mode0, uvec& base0, uvec& ar
 	f0.insert_rows(f0.n_rows, vec(Ab0.n_cols - f0.n_rows).fill(0));
 }
 
-Branch Branch::upBranch(int index)
+Branch Branch::upBranch(int index, vec x)
 {
 	vec new_f = this->f;
 	mat new_Ab = this->Ab;
 	uvec new_base = this->base;
 	uvec new_arti = this->arti;
 
+	rowvec rv = rowvec(new_Ab.n_cols).fill(0);
+	rv[index] = 1;
+	rv[new_Ab.n_cols - 1] = ((int)x[index]) + 1;
+
+	for (int i = 0; i < new_Ab.n_rows; i++) {
+		if (fabs(new_Ab.row(i)[index] - 0) > this->EPSILON) {
+			rv -= new_Ab.row(i);
+			break;
+		}
+	}
+	cout << "new: ";
+	rv.print();
+	if (rv[rv.n_cols - 1] >= 0) {
+
+		new_Ab.insert_rows(new_Ab.n_rows, rv);
+
+		colvec cv = colvec(new_Ab.n_rows).fill(0);
+		cv[new_Ab.n_rows - 1] = -1;
+		colvec cv2 = colvec(new_Ab.n_rows).fill(0);
+		cv2[new_Ab.n_rows - 1] = 1;
+		new_Ab.insert_cols(new_Ab.n_cols - 1, cv);
+		new_Ab.insert_cols(new_Ab.n_cols - 1, cv2);
+
+		new_base.insert_rows(new_base.n_rows, uvec({ new_Ab.n_cols - 2 }));
+		new_arti.insert_rows(new_arti.n_rows, uvec({ new_Ab.n_cols - 2 }));
+		new_f.insert_rows(new_f.n_rows - 1, vec(2).fill(0));
+	}
+	else {
+		rv = -rv;
+		new_Ab.insert_rows(new_Ab.n_rows, rv);
+
+		colvec cv = colvec(new_Ab.n_rows).fill(0);
+		cv[new_Ab.n_rows - 1] = 1;
+		new_Ab.insert_cols(new_Ab.n_cols - 1, cv);
+		new_base.insert_rows(new_base.n_rows, uvec({ new_Ab.n_cols - 2 }));
+		new_f.insert_rows(new_f.n_rows - 1, vec({ 0 }));
+	}
 	return Branch(new_f, new_Ab, new_base, new_arti);
 }
 
@@ -132,20 +169,41 @@ Branch Branch::lowBranch(int index, vec x)
 	uvec new_base = this->base;
 	uvec new_arti = this->arti;
 
-	colvec cv = colvec(new_Ab.n_rows).fill(0);
-	new_Ab.insert_cols(new_Ab.n_cols - 1, cv);
 	rowvec rv = rowvec(new_Ab.n_cols).fill(0);
 	rv[index] = 1;
-	rv[new_Ab.n_cols - 2] = 1;
 	rv[new_Ab.n_cols - 1] = (int)x[index];
+
 	for (int i = 0; i < new_Ab.n_rows; i++) {
 		if (fabs(new_Ab.row(i)[index] - 0) > this->EPSILON) {
 			rv -= new_Ab.row(i);
 			break;
 		}
 	}
-	new_Ab.insert_rows(new_Ab.n_rows, rv);
-	new_base.insert_rows(new_base.n_rows, uvec({new_Ab.n_cols-2}));
-	new_f.insert_rows(new_f.n_rows - 1, vec({ 0 }));
+	cout << "new: ";
+	rv.print();
+	if (rv[rv.n_cols - 1] >= 0) {
+		new_Ab.insert_rows(new_Ab.n_rows, rv);
+
+		colvec cv = colvec(new_Ab.n_rows).fill(0);
+		cv[new_Ab.n_rows - 1] = 1;
+		new_Ab.insert_cols(new_Ab.n_cols - 1, cv);
+		new_base.insert_rows(new_base.n_rows, uvec({ new_Ab.n_cols - 2 }));
+		new_f.insert_rows(new_f.n_rows - 1, vec({ 0 }));
+	}
+	else {
+		rv = -rv;
+		new_Ab.insert_rows(new_Ab.n_rows, rv);
+
+		colvec cv = colvec(new_Ab.n_rows).fill(0);
+		cv[new_Ab.n_rows - 1] = -1;
+		colvec cv2 = colvec(new_Ab.n_rows).fill(0);
+		cv2[new_Ab.n_rows - 1] = 1;
+		new_Ab.insert_cols(new_Ab.n_cols - 1, cv);
+		new_Ab.insert_cols(new_Ab.n_cols - 1, cv2);
+
+		new_base.insert_rows(new_base.n_rows, uvec({ new_Ab.n_cols - 2 }));
+		new_arti.insert_rows(new_arti.n_rows, uvec({ new_Ab.n_cols - 2 }));
+		new_f.insert_rows(new_f.n_rows - 1, vec(2).fill(0));
+	}
 	return Branch(new_f, new_Ab, new_base, new_arti);
 }
