@@ -12,7 +12,7 @@ using namespace std;
 
 void read(int& cnt, string& f, vector<string>& cst) 
 {
-	ifstream in("C:\\Users\\lenovo\\Desktop\\LP\\case0.txt");
+	ifstream in("C:\\Users\\lenovo\\Desktop\\LP\\case3.txt");
 	stringstream ss;
 	if (in.fail())
 	{
@@ -33,7 +33,7 @@ void read(int& cnt, string& f, vector<string>& cst)
 
 int main()
 {
-	int cnt;
+	int cnt = 0;
 	string ff;
 	vector<string> cst;
 	read(cnt, ff, cst);
@@ -46,6 +46,9 @@ int main()
 	uvec base;
 	uvec arti;
 	Branch::normal(f, Ab, mode, base, arti);
+	f.t().print();
+	Ab.print();
+	base.t().print();
 
 	Branch bh = Branch(f,Ab,base,arti);
 
@@ -56,7 +59,21 @@ int main()
 	cout << opt << endl;
 	cout << status << endl;
 	x.t().print();
+	bh.Ab.print();
+	cout << "new branch:" << endl;
 
+	Branch low = bh.lowBranch(0, x);
+	low.Ab.print();
+	cout << "base: ";
+	low.base.t().print();
+
+	vec x2 = vec();
+	Status s2 = SimplexNormalFormWithSlackVariables(low.f, low.Ab, low.base, low.arti, x2, opt);
+	cout << "Branch result:" << endl;
+	cout << "opt: " << opt << endl;
+	cout << "x: ";
+	x2.t().print();
+	low.Ab.print();
 	getchar();
 	return 0;
 }

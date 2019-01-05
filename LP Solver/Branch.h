@@ -24,5 +24,5 @@ public:
 	static void normal(vec& f0, mat& Ab0, vector<int>& mode0, uvec& base0, uvec& arti0);
 	int FindFirstNotInt(vec x);
 	Branch upBranch(int index);
-	Branch lowBranch(int index);
+	Branch lowBranch(int index, vec x);
 };

@@ -1,4 +1,5 @@
 #include "Branch.h"
+#include <math.h>
 #include <sstream>
 using namespace std;
 int Branch::FindFirstNotInt(vec x) {
@@ -49,6 +50,7 @@ void Branch::parse(const int& cnt, const string& ff, const vector<string>& cst, 
 		cs << cst[i];
 		while (!cs.eof()) {
 			cs >> seg;
+			if (seg[0] == 'R') continue;
 			if (seg[0] == '<' || seg[0] == '>' || seg[0] == '=')
 				break;
 			positive = seg[0] == '-' ? false : true;
@@ -104,7 +106,7 @@ void Branch::normal(vec& f0, mat& Ab0, vector<int>& mode0, uvec& base0, uvec& ar
 				tart.push_back(Ab0.n_cols - 2); break;
 		case 2: cv[i] = 1; Ab0.insert_cols(Ab0.n_cols - 1, cv); 
 				tbase.push_back(Ab0.n_cols - 2);
-				tart.push_back(Ab0.n_cols - 2); break; break;
+				tart.push_back(Ab0.n_cols - 2); break;
 		default:break;
 		}
 	}
@@ -119,14 +121,31 @@ Branch Branch::upBranch(int index)
 	mat new_Ab = this->Ab;
 	uvec new_base = this->base;
 	uvec new_arti = this->arti;
+
 	return Branch(new_f, new_Ab, new_base, new_arti);
 }
 
-Branch Branch::lowBranch(int index)
+Branch Branch::lowBranch(int index, vec x)
 {
 	vec new_f = this->f;
 	mat new_Ab = this->Ab;
 	uvec new_base = this->base;
 	uvec new_arti = this->arti;
+
+	colvec cv = colvec(new_Ab.n_rows).fill(0);
+	new_Ab.insert_cols(new_Ab.n_cols - 1, cv);
+	rowvec rv = rowvec(new_Ab.n_cols).fill(0);
+	rv[index] = 1;
+	rv[new_Ab.n_cols - 2] = 1;
+	rv[new_Ab.n_cols - 1] = (int)x[index];
+	for (int i = 0; i < new_Ab.n_rows; i++) {
+		if (fabs(new_Ab.row(i)[index] - 0) > this->EPSILON) {
+			rv -= new_Ab.row(i);
+			break;
+		}
+	}
+	new_Ab.insert_rows(new_Ab.n_rows, rv);
+	new_base.insert_rows(new_base.n_rows, uvec({new_Ab.n_cols-2}));
+	new_f.insert_rows(new_f.n_rows - 1, vec({ 0 }));
 	return Branch(new_f, new_Ab, new_base, new_arti);
 }
