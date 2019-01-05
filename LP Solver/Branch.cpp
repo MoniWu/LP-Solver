@@ -3,9 +3,10 @@
 #include <sstream>
 using namespace std;
 int Branch::FindFirstNotInt(vec x) {
+	const double EPSILON = 1e-7;
 	for (int i = 0; i < x.n_rows; i++) {
 		int temp = (int)x[i];
-		if ((x[i] - temp) > this->EPSILON)
+		if (fabs(x[i] - temp) > EPSILON)
 			return i;
 	}
 	return -1;
@@ -132,8 +133,6 @@ Branch Branch::upBranch(int index, vec x)
 			break;
 		}
 	}
-	cout << "new: ";
-	rv.print();
 	if (rv[rv.n_cols - 1] >= 0) {
 
 		new_Ab.insert_rows(new_Ab.n_rows, rv);
@@ -179,8 +178,6 @@ Branch Branch::lowBranch(int index, vec x)
 			break;
 		}
 	}
-	cout << "new: ";
-	rv.print();
 	if (rv[rv.n_cols - 1] >= 0) {
 		new_Ab.insert_rows(new_Ab.n_rows, rv);
 
