@@ -127,8 +127,10 @@ int RecurBranch(const Branch& bch, double& opt, vec& opt_x, string mark)
 			return 0;
 		}
 		else {
-			RecurBranch(cpy.lowBranch(index, x), opt, opt_x, mark+"->L");
-			RecurBranch(cpy.upBranch(index, x), opt, opt_x, mark+"->R");
+			if (result > opt) {
+				RecurBranch(cpy.lowBranch(index, x), opt, opt_x, mark + "->L");
+				RecurBranch(cpy.upBranch(index, x), opt, opt_x, mark + "->R");
+			}
 			return 0;
 		}
 		break;
