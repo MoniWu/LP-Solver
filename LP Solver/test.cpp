@@ -12,7 +12,7 @@ using namespace std;
 
 void read(int& cnt, string& f, vector<string>& cst) 
 {
-	ifstream in("C:\\Users\\lenovo\\source\\repos\\LP-Solver\\case3(TA).txt");
+	ifstream in("");
 	stringstream ss;
 	if (in.fail())
 	{
