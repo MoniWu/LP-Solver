@@ -10,9 +10,9 @@ using namespace LPSolver;
 using namespace std;
 
 
-void read(int& cnt, string& f, vector<string>& cst) 
+void read(int& cnt, string& f, vector<string>& cst, const string& path) 
 {
-	ifstream in("");
+	ifstream in(path);
 	stringstream ss;
 	if (in.fail())
 	{
@@ -33,12 +33,16 @@ void read(int& cnt, string& f, vector<string>& cst)
 
 int RecurBranch(const Branch& bch, double& opt, vec& opt_x, string mark);
 
-int main()
+int main(int argc, char** argv)
 {
+	if (!argv[1]) {
+		cout << "Please enter data file" << endl;
+		return -1;
+	}
 	int cnt = 0;
 	string ff;
 	vector<string> cst;
-	read(cnt, ff, cst);
+	read(cnt, ff, cst, argv[1]);
 
 	vec f = vec(cnt).fill(0);
 	mat Ab = mat(cst.size(),cnt+1).fill(0);
